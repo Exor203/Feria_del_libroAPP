@@ -1,18 +1,11 @@
 import { useEffect, useState } from "react";
-import { Alert, BackHandler, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
+import { Alert, BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { validateAuthForm, type AuthMode } from "../services/authValidation";
+
+import { FeriaLogo, SocialLogo } from "../components/AuthLogos";
 
 export type DemoSession = { mode: "demo"; displayName: string; email: string };
 type Props = { onDemoLogin: (session: DemoSession) => void };
-const reference = require("../../assets/auth/login-reference.png");
-
-function Logo({ width }: { width: number }) {
-  const scale = width / 367;
-  return <View accessible accessibilityLabel="Logo de la Feria del Libro" style={{ width, height: 297 * scale, overflow: "hidden" }}>
-    <Image accessible={false} source={reference} resizeMode="stretch" style={{ position: "absolute", width: 592 * scale, height: 1092 * scale, left: -81 * scale, top: -164 * scale }} />
-  </View>;
-}
-
 export default function LoginScreen({ onDemoLogin }: Props) {
   const [mode, setMode] = useState<"welcome" | AuthMode>("welcome");
   const [name, setName] = useState("");
@@ -40,20 +33,20 @@ export default function LoginScreen({ onDemoLogin }: Props) {
   return <KeyboardAvoidingView style={s.screen} behavior={Platform.OS === "ios" ? "padding" : "height"}>
     <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[s.content, { minHeight: Math.max(500, height - 60) }]}>
       {mode === "welcome" ? <>
-        <View style={s.logo}><Logo width={Math.min(width - 72, 320)} /></View>
+        <View style={s.logo}><FeriaLogo width={Math.min(width - 72, 320)} /></View>
         <Text accessibilityRole="header" style={s.welcome}>BIENVENIDOS</Text>
         <View style={s.buttons}>
           <Pressable accessibilityRole="button" onPress={() => changeMode("register")} style={s.primary}><Text style={s.primaryText}>Crear cuenta</Text></Pressable>
           <Pressable accessibilityRole="button" onPress={() => changeMode("login")} style={s.primary}><Text style={s.primaryText}>Iniciar sesión</Text></Pressable>
         </View>
         <View style={s.divider}><View style={s.line} /><Text style={s.or}>O</Text><View style={s.line} /></View>
-        <View style={s.socialRow}>{["Google", "Facebook", "Apple"].map((provider, index) => <Pressable key={provider} accessibilityRole="button" accessibilityLabel={`Ingresar con ${provider}, próximamente`} onPress={() => social(provider)} style={s.social}>
-          <View style={{ width: 48, height: 42, overflow: "hidden" }}><Image accessible={false} source={reference} resizeMode="stretch" style={{ position: "absolute", width: 592, height: 1092, left: -[151, 244, 335][index], top: -909 }} /></View>
+        <View style={s.socialRow}>{(["Google", "Facebook", "Apple"] as const).map((provider) => <Pressable key={provider} accessibilityRole="button" accessibilityLabel={`Ingresar con ${provider}, próximamente`} onPress={() => social(provider)} style={s.social}>
+          <SocialLogo provider={provider} />
         </Pressable>)}</View>
         <Text style={s.note}>Modo de prueba · las cuentas todavía no están habilitadas.</Text>
       </> : <>
         <Pressable accessibilityRole="button" onPress={() => changeMode("welcome")} style={s.back}><Text style={s.link}>‹ Volver</Text></Pressable>
-        <View style={s.formLogo}><Logo width={132} /></View>
+        <View style={s.formLogo}><FeriaLogo width={132} /></View>
         <Text accessibilityRole="header" style={s.welcome}>{mode === "register" ? "CREAR CUENTA" : "INICIAR SESIÓN"}</Text>
         <Text style={s.demoNotice}>Modo de prueba: no se crean cuentas ni se guardan contraseñas. Usá datos ficticios.</Text>
         {mode === "register" && <View style={s.field}><Text style={s.label}>Nombre</Text><TextInput accessibilityLabel="Nombre" value={name} onChangeText={setName} style={s.input} autoComplete="name" placeholder="Tu nombre" placeholderTextColor="#657173" /></View>}

@@ -37,3 +37,7 @@
 - Google, Facebook y Apple muestran un aviso de disponibilidad futura. Firebase Authentication todavía no está configurado.
 - El acceso a la maqueta requiere pasar por la bienvenida y un formulario identificado como modo de prueba. Esta sesión no habilita operaciones reales de intercambio.
 - Acuerdo de Git: commit y push al terminar una etapa sin errores o por indicación del usuario; el mensaje del commit es el nombre de la etapa finalizada.
+### Corrección de los logos del login
+
+- Se reemplazó el recorte de la captura por componentes SVG locales: marca de la feria y símbolos de Google, Facebook y Apple.
+- Se verificó visualmente una vista renderizada de los cuatro logos y se incluyó la atribución de los símbolos sociales.
