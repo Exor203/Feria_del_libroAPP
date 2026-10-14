@@ -1,11 +1,13 @@
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
-import { Platform, Pressable, SafeAreaView, ScrollView, StatusBar as NativeStatusBar, StyleSheet, Text, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, Platform, Pressable, SafeAreaView, ScrollView, StatusBar as NativeStatusBar, StyleSheet, Text, TextInput, View } from "react-native";
 import { books } from "./src/data/catalogoInicial";
 import BooksScreen from "./src/screens/BooksScreen";
 import HomeScreen from "./src/screens/HomeScreen";
 import AssistantScreen from "./src/screens/AssistantScreen";
-import LoginScreen, { type DemoSession } from "./src/screens/LoginScreen";
+import LoginScreen from "./src/screens/LoginScreen";
+import { watchAccount, logoutAccount, accountSession, type AccountSession } from "./src/services/authService";
+import { authErrorMessage } from "./src/services/authErrors";
 import SectionMenu, { type MenuDestination } from "./src/components/SectionMenu";
 import { ReferenceIcon } from "./src/components/ReferenceArt";
 import { localContentRepository } from "./src/services/localContentRepository";
@@ -15,7 +17,17 @@ type EventTab = "agenda" | "anuncios";
 const announcements = ["¡Llegó Eduardo Sacheri al predio!", "Firma de ejemplares en el Auditorio B", "Nuevos títulos disponibles en Stand A"];
 
 export default function App() {
-  const [session, setSession] = useState<DemoSession | null>(null);
+  const [session, setSession] = useState<AccountSession | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [authProblem, setAuthProblem] = useState<string | null>(null);
+  const [authAttempt, setAuthAttempt] = useState(0);
+  const [leaving, setLeaving] = useState(false);
+  useEffect(() => {
+    setAuthReady(false); setAuthProblem(null);
+    try {
+      return watchAccount(user => { setSession(user ? accountSession(user) : null); setAuthReady(true); }, problem => { setAuthProblem(authErrorMessage(problem)); setAuthReady(true); });
+    } catch (problem) { setAuthProblem(authErrorMessage(problem)); setAuthReady(true); }
+  }, [authAttempt]);
   const [screen, setScreen] = useState<Screen>("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const [eventTab, setEventTab] = useState<EventTab>("agenda");
@@ -23,11 +35,18 @@ export default function App() {
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<string | null>(null);
   const openScreen = (next: Screen) => { setScreen(next); setMenuOpen(false); };
   const selectSection = (next: MenuDestination) => { if (next === "books") setSelectedBookId(null); openScreen(next); };
-  const signOut = () => { setSession(null); setScreen("home"); setMenuOpen(false); setSelectedBookId(null); setSelectedAnnouncement(null); };
-  if (!session) return <SafeAreaView style={[styles.safeArea, Platform.OS === "android" && { paddingTop: NativeStatusBar.currentHeight ?? 0, paddingBottom: 12 }]}><StatusBar style="dark" /><LoginScreen onDemoLogin={setSession} /></SafeAreaView>;
+  const signOut = async () => {
+    if (leaving) return;
+    setLeaving(true);
+    try { await logoutAccount(); setSession(null); setScreen("home"); setMenuOpen(false); setSelectedBookId(null); setSelectedAnnouncement(null); }
+    catch (problem) { Alert.alert("No pudimos cerrar la sesión", authErrorMessage(problem)); }
+    finally { setLeaving(false); }
+  };
+  if (!authReady || authProblem) return <SafeAreaView style={[styles.safeArea, { justifyContent: "center", alignItems: "center", padding: 24 }]}><StatusBar style="dark" />{authProblem ? <><Text style={styles.description}>{authProblem}</Text><Pressable accessibilityRole="button" onPress={() => setAuthAttempt(value => value + 1)} style={{ padding: 20 }}><Text style={styles.backLink}>Reintentar</Text></Pressable></> : <><ActivityIndicator color="#0C4358" /><Text style={styles.description}>Cargando tu sesión…</Text></>}</SafeAreaView>;
+  if (!session) return <SafeAreaView style={[styles.safeArea, Platform.OS === "android" && { paddingTop: NativeStatusBar.currentHeight ?? 0, paddingBottom: 12 }]}><StatusBar style="dark" /><LoginScreen onAuthenticated={user => setSession(accountSession(user))} /></SafeAreaView>;
   return <SafeAreaView style={[styles.safeArea, Platform.OS === "android" && { paddingTop: NativeStatusBar.currentHeight ?? 0, paddingBottom: 12 }]} >
     <StatusBar style="dark" />
-    {screen === "home" && <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 6 }}><Text numberOfLines={1} style={{ color: "#0C4358", fontSize: 12, flex: 1 }}>Modo prueba · {session.displayName}</Text><Pressable accessibilityRole="button" accessibilityLabel="Cerrar sesión de prueba" onPress={signOut} style={{ minHeight: 44, paddingHorizontal: 12, justifyContent: "center" }}><Text style={{ color: "#0C4358", fontWeight: "700" }}>Salir</Text></Pressable></View>}
+    {screen === "home" && <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 6 }}><Text numberOfLines={1} style={{ color: "#0C4358", fontSize: 12, flex: 1 }}>Hola, {session.displayName || session.email?.split("@")[0] || "lector"}</Text><Pressable accessibilityRole="button" accessibilityLabel="Cerrar sesión" disabled={leaving} onPress={() => void signOut()} style={{ minHeight: 44, paddingHorizontal: 12, justifyContent: "center" }}><Text style={{ color: "#0C4358", fontWeight: "700" }}>{leaving ? "Saliendo…" : "Salir"}</Text></Pressable></View>}
     {screen !== "home" && <TopBar title={titleFor(screen)} onBack={() => screen === "books" && selectedBookId ? setSelectedBookId(null) : openScreen("home")} />}
     {screen === "home" && <HomeScreen onBook={(id) => { setSelectedBookId(id); openScreen("books"); }} onArtists={() => openScreen("artists")} />}
     {screen === "books" && <BooksScreen selectedBookId={selectedBookId} onSelect={setSelectedBookId} onCloseDetail={() => setSelectedBookId(null)} onExchange={() => openScreen("exchange")} />}

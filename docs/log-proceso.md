@@ -50,3 +50,10 @@
 - Se verificaron respuestas reales con contexto, aclaración de stock de demostración y manejo de error temporal del proveedor.
 - La clave de Gemini queda únicamente en server/.env, excluida de Git; los errores enviados al teléfono no incluyen credenciales.
 - Modelo final de la prueba: Gemini 3.5 Flash-Lite. Conversación de dos mensajes verificada usando el cliente de la app.
+
+## 2026-10-14 — Autenticación con correo y contraseña
+
+- Se sustituyó la sesión de demostración por Firebase Authentication: registro, ingreso, cierre y recuperación de contraseña.
+- Se agregó persistencia de sesión con AsyncStorage compatible con Expo Go.
+- Se verificaron operaciones reales con una cuenta temporal, que fue eliminada al terminar; compilaciones Android/iOS y TypeScript correctos.
+- Google está habilitado en Firebase; su integración en la app continúa pendiente. El chat de IA queda pendiente de estabilizar.

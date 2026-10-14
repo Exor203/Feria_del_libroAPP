@@ -1,12 +1,16 @@
-import { useEffect, useState } from "react";
-import { Alert, BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Alert, BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { validateAuthForm, type AuthMode } from "../services/authValidation";
 
 import { FeriaLogo, SocialLogo } from "../components/AuthLogos";
 
-export type DemoSession = { mode: "demo"; displayName: string; email: string };
-type Props = { onDemoLogin: (session: DemoSession) => void };
-export default function LoginScreen({ onDemoLogin }: Props) {
+import { authConfigured, loginAccount, registerAccount, resetAccountPassword, type AccountUser } from "../services/authService";
+import { authErrorMessage } from "../services/authErrors";
+type Props = { onAuthenticated: (user: AccountUser) => void };
+export default function LoginScreen({ onAuthenticated }: Props) {
+  const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const [mode, setMode] = useState<"welcome" | AuthMode>("welcome");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -15,21 +19,34 @@ export default function LoginScreen({ onDemoLogin }: Props) {
   const [visiblePassword, setVisiblePassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { width, height } = useWindowDimensions();
-  const changeMode = (next: "welcome" | AuthMode) => { setMode(next); setError(null); setPassword(""); setConfirmation(""); setVisiblePassword(false); };
+  const changeMode = (next: "welcome" | AuthMode) => { if (busyRef.current) return; setMode(next); setNotice(null); setError(null); setPassword(""); setConfirmation(""); setVisiblePassword(false); };
   useEffect(() => {
     if (mode === "welcome") return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => { changeMode("welcome"); return true; });
     return () => subscription.remove();
   }, [mode]);
-  const submit = () => {
-    if (mode === "welcome") return;
+  const submit = async () => {
+    if (mode === "welcome" || busyRef.current) return;
     const message = validateAuthForm(mode, { name, email, password, confirmation });
-    setError(message);
+    setError(message); setNotice(null);
     if (message) return;
-    setPassword(""); setConfirmation("");
-    onDemoLogin({ mode: "demo", displayName: mode === "register" ? name.trim() : email.trim().split("@")[0], email: email.trim().toLowerCase() });
+    busyRef.current = true; setBusy(true);
+    try {
+      const user = mode === "register" ? await registerAccount(name, email, password) : await loginAccount(email, password);
+      setPassword(""); setConfirmation(""); onAuthenticated(user);
+    } catch (problem) { setError(authErrorMessage(problem)); }
+    finally { busyRef.current = false; setBusy(false); }
   };
-  const social = (provider: string) => Alert.alert(`Ingresar con ${provider}`, "Este acceso estará disponible cuando habilitemos las cuentas. Por ahora podés usar el modo de prueba.");
+  const recover = async () => {
+    if (busyRef.current) return;
+    const emailError = validateAuthForm("login", { name: "", email, password: "valid12", confirmation: "" });
+    if (emailError) { setError(emailError); return; }
+    busyRef.current = true; setBusy(true); setError(null); setNotice(null);
+    try { await resetAccountPassword(email); setNotice("Si existe una cuenta con ese correo, recibirás instrucciones para recuperar tu contraseña. Revisá también spam."); }
+    catch (problem) { setError(authErrorMessage(problem)); }
+    finally { busyRef.current = false; setBusy(false); }
+  };
+  const social = (provider: string) => Alert.alert(`Ingresar con ${provider}`, "Este acceso todavía no está conectado en la app. Podés crear una cuenta o iniciar sesión con correo y contraseña.");
   return <KeyboardAvoidingView style={s.screen} behavior={Platform.OS === "ios" ? "padding" : "height"}>
     <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[s.content, { minHeight: Math.max(500, height - 60) }]}>
       {mode === "welcome" ? <>
@@ -43,18 +60,21 @@ export default function LoginScreen({ onDemoLogin }: Props) {
         <View style={s.socialRow}>{(["Google", "Facebook", "Apple"] as const).map((provider) => <Pressable key={provider} accessibilityRole="button" accessibilityLabel={`Ingresar con ${provider}, próximamente`} onPress={() => social(provider)} style={s.social}>
           <SocialLogo provider={provider} />
         </Pressable>)}</View>
-        <Text style={s.note}>Modo de prueba · las cuentas todavía no están habilitadas.</Text>
+        <Text style={s.note}>Creá tu cuenta para participar de la comunidad de la feria.</Text>
       </> : <>
         <Pressable accessibilityRole="button" onPress={() => changeMode("welcome")} style={s.back}><Text style={s.link}>‹ Volver</Text></Pressable>
         <View style={s.formLogo}><FeriaLogo width={132} /></View>
         <Text accessibilityRole="header" style={s.welcome}>{mode === "register" ? "CREAR CUENTA" : "INICIAR SESIÓN"}</Text>
-        <Text style={s.demoNotice}>Modo de prueba: no se crean cuentas ni se guardan contraseñas. Usá datos ficticios.</Text>
-        {mode === "register" && <View style={s.field}><Text style={s.label}>Nombre</Text><TextInput accessibilityLabel="Nombre" value={name} onChangeText={setName} style={s.input} autoComplete="name" placeholder="Tu nombre" placeholderTextColor="#657173" /></View>}
-        <View style={s.field}><Text style={s.label}>Correo electrónico</Text><TextInput accessibilityLabel="Correo electrónico" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" style={s.input} placeholder="nombre@ejemplo.com" placeholderTextColor="#657173" /></View>
-        <View style={s.field}><Text style={s.label}>Contraseña</Text><View style={s.passwordRow}><TextInput accessibilityLabel="Contraseña" value={password} onChangeText={setPassword} secureTextEntry={!visiblePassword} autoCapitalize="none" autoCorrect={false} autoComplete="off" style={s.passwordInput} placeholder="Al menos 6 caracteres" placeholderTextColor="#657173" /><Pressable accessibilityRole="button" accessibilityLabel={visiblePassword ? "Ocultar contraseña" : "Mostrar contraseña"} onPress={() => setVisiblePassword(value => !value)} style={s.showPassword}><Text style={s.link}>{visiblePassword ? "Ocultar" : "Ver"}</Text></Pressable></View></View>
-        {mode === "register" && <View style={s.field}><Text style={s.label}>Repetir contraseña</Text><TextInput accessibilityLabel="Repetir contraseña" value={confirmation} onChangeText={setConfirmation} secureTextEntry={!visiblePassword} autoCapitalize="none" autoCorrect={false} autoComplete="off" style={s.input} /></View>}
+        <Text style={s.demoNotice}>{mode === "register" ? "Usá un correo al que tengas acceso. Tu cuenta se crea en Firebase." : "Ingresá con el correo y la contraseña de tu cuenta."}</Text>
+        {mode === "register" && <View style={s.field}><Text style={s.label}>Nombre</Text><TextInput accessibilityLabel="Nombre" editable={!busy} value={name} onChangeText={setName} style={s.input} autoComplete="name" placeholder="Tu nombre" placeholderTextColor="#657173" /></View>}
+        <View style={s.field}><Text style={s.label}>Correo electrónico</Text><TextInput accessibilityLabel="Correo electrónico" editable={!busy} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" style={s.input} placeholder="nombre@ejemplo.com" placeholderTextColor="#657173" /></View>
+        <View style={s.field}><Text style={s.label}>Contraseña</Text><View style={s.passwordRow}><TextInput accessibilityLabel="Contraseña" editable={!busy} value={password} onChangeText={setPassword} secureTextEntry={!visiblePassword} autoCapitalize="none" autoCorrect={false} autoComplete="off" style={s.passwordInput} placeholder="Al menos 6 caracteres" placeholderTextColor="#657173" /><Pressable accessibilityRole="button" accessibilityLabel={visiblePassword ? "Ocultar contraseña" : "Mostrar contraseña"} onPress={() => setVisiblePassword(value => !value)} style={s.showPassword}><Text style={s.link}>{visiblePassword ? "Ocultar" : "Ver"}</Text></Pressable></View></View>
+        {mode === "register" && <View style={s.field}><Text style={s.label}>Repetir contraseña</Text><TextInput accessibilityLabel="Repetir contraseña" editable={!busy} value={confirmation} onChangeText={setConfirmation} secureTextEntry={!visiblePassword} autoCapitalize="none" autoCorrect={false} autoComplete="off" style={s.input} /></View>}
         {error && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={s.error}>{error}</Text>}
-        <Pressable accessibilityRole="button" onPress={submit} style={s.primary}><Text style={s.submitText}>Entrar en modo prueba</Text></Pressable>
+        {notice && <Text accessibilityLiveRegion="polite" style={s.note}>{notice}</Text>}
+        <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy || !authConfigured, busy }} disabled={busy || !authConfigured} onPress={() => void submit()} style={[s.primary, (busy || !authConfigured) && { opacity: 0.6 }]}>{busy ? <ActivityIndicator color="white" /> : <Text style={s.submitText}>{mode === "register" ? "Crear cuenta" : "Iniciar sesión"}</Text>}</Pressable>
+        {!authConfigured && <Text style={s.error}>Falta completar la configuración de acceso de la app.</Text>}
+        {mode === "login" && <Pressable accessibilityRole="button" disabled={busy || !authConfigured} onPress={() => void recover()} style={s.switch}><Text style={s.link}>Olvidé mi contraseña</Text></Pressable>}
         <Pressable accessibilityRole="button" onPress={() => changeMode(mode === "login" ? "register" : "login")} style={s.switch}><Text style={s.link}>{mode === "login" ? "¿No tenés cuenta? Crear cuenta" : "¿Ya tenés cuenta? Iniciar sesión"}</Text></Pressable>
       </>}
     </ScrollView>
