@@ -29,3 +29,6 @@ yarn-debug.*
 yarn-error.*
 # Configuración local de herramientas
 .claude/
+
+# Contexto compilado para el servidor de prueba
+server/.generated/

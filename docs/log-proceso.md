@@ -41,3 +41,12 @@
 
 - Se reemplazó el recorte de la captura por componentes SVG locales: marca de la feria y símbolos de Google, Facebook y Apple.
 - Se verificó visualmente una vista renderizada de los cuatro logos y se incluyó la atribución de los símbolos sociales.
+
+## 2026-10-14 — Chat con IA
+
+- Chat con consultas sugeridas, contexto conversacional, estados de carga, errores y reintento.
+- Firebase AI Logic preparado; la prueba encontró un bloqueo de App Check.
+- Por indicación del usuario, se agregó una prueba con Gemini Developer API a través de un servidor local para evitar reCAPTCHA y facturación.
+- Se verificaron respuestas reales con contexto, aclaración de stock de demostración y manejo de error temporal del proveedor.
+- La clave de Gemini queda únicamente en server/.env, excluida de Git; los errores enviados al teléfono no incluyen credenciales.
+- Modelo final de la prueba: Gemini 3.5 Flash-Lite. Conversación de dos mensajes verificada usando el cliente de la app.
