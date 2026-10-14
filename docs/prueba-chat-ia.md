@@ -24,7 +24,7 @@ El servidor compila al iniciar la política y el catálogo desde el código de l
 
 ## Estado comprobado el 14/10/2026
 
-Se recibieron dos respuestas reales de Gemini: disponibilidad de El Eternauta y una pregunta de seguimiento. Ambas identificaron el stock como ejemplo. Se observaron errores temporales HTTP 503 y demoras con Gemini 3.8 Flash; quedaron manejados con reintento. Se eligió Gemini 3.5 Flash-Lite y se verificó una conversación completa mediante el mismo cliente usado por la app. El tiempo de espera es de 45 segundos en el servidor y 50 en el cliente.
+Se recibieron dos respuestas reales de Gemini: disponibilidad de El Eternauta y una pregunta de seguimiento. Ambas identificaron el stock como ejemplo. Se observaron errores temporales HTTP 503 y demoras con Gemini 3.8 Flash; quedaron manejados con reintento. Se eligió Gemini 3.5 Flash-Lite y se verificó una conversación completa mediante el mismo cliente usado por la app. El tiempo de espera es de 90 segundos en el servidor y 100 en el cliente.
 
 ## Pendiente para producción
 

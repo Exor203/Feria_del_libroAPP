@@ -39,7 +39,7 @@ const server = http.createServer(async (req, res) => {
     busy = true; requests++; last = now;
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey }, signal: AbortSignal.timeout(45000),
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey }, signal: AbortSignal.timeout(90000),
         body: JSON.stringify({ systemInstruction: { parts: [{ text: assistantInstructions() }] }, contents: [...conversationHistory(history).map(turn => ({ role: turn.role, parts: [{ text: turn.text }] })), { role: 'user', parts: [{ text: body.message.trim() }] }], generationConfig: { temperature: 0.3, maxOutputTokens: 2048, thinkingConfig: { thinkingLevel: "LOW" } } }),
       });
       const data = await response.json();
@@ -59,5 +59,5 @@ const server = http.createServer(async (req, res) => {
     reply(res, 503, { error: error.name === 'TimeoutError' ? 'La IA tardó demasiado. Probá otra vez.' : 'No pudimos conectarnos con Gemini. Revisá internet.' });
   }
 });
-server.requestTimeout = 55000;
+server.requestTimeout = 110000;
 server.listen(Number(process.env.PORT || 8787), '0.0.0.0', () => console.log(`Servidor local Gemini listo en puerto ${process.env.PORT || 8787}. Clave privada cargada; no se muestra ni se envía al teléfono.`));

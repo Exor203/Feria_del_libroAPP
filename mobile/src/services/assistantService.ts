@@ -33,7 +33,7 @@ export async function askAssistant(message: string, turns: ChatTurn[]): Promise<
     if (localMode) {
       if (!__DEV__) throw new Error("El servidor local solo se permite en la versión de prueba.");
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 50000);
+      const timeout = setTimeout(() => controller.abort(), 100000);
       try {
         const response = await fetch(`${localUrl!.replace(/\/$/, "")}/chat`, {
           method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${localToken}` }, signal: controller.signal,
@@ -56,7 +56,7 @@ export async function askAssistant(message: string, turns: ChatTurn[]): Promise<
       model: modelName!,
       systemInstruction: assistantInstructions(),
       generationConfig: { maxOutputTokens: 1024, temperature: 0.3 },
-    }, { timeout: 20000 });
+    }, { timeout: 90000 });
     const chat = model.startChat({ history: conversationHistory(turns).map(turn => ({ role: turn.role, parts: [{ text: turn.text }] })) });
     const result = await chat.sendMessage(message.trim());
     const text = result.response.text().trim();
