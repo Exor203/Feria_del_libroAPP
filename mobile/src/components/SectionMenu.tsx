@@ -1,13 +1,15 @@
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { ReferenceIcon, type IconName } from "../components/ReferenceArt";
 
-export type MenuDestination = "books" | "exchange" | "events" | "map" | "artists" | "camera" | "assistant";
+import GameIcon from "./GameIcon";
+
+export type MenuDestination = "books" | "exchange" | "events" | "map" | "artists" | "camera" | "assistant" | "game";
 type Props = { visible: boolean; onClose: () => void; onSelect: (destination: MenuDestination) => void };
 
 export default function SectionMenu({ visible, onClose, onSelect }: Props) {
   const { height } = useWindowDimensions();
-  const item = (destination: MenuDestination, label: string, name: IconName = destination) => <Pressable accessibilityRole="button" accessibilityLabel={`Abrir ${label}`} onPress={() => onSelect(destination)} style={s.item}>
-    <ReferenceIcon name={name} size={64} /><Text style={[s.label, destination === "events" && s.eventsText]}>{label}</Text>
+  const item = (destination: MenuDestination, label: string, name?: IconName) => <Pressable accessibilityRole="button" accessibilityLabel={`Abrir ${label}`} onPress={() => onSelect(destination)} style={s.item}>
+    {destination === "game" ? <GameIcon size={64} /> : <ReferenceIcon name={name ?? destination} size={64} />}<Text style={[s.label, destination === "events" && s.eventsText]}>{label}</Text>
   </Pressable>;
   return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
     <View style={s.overlay}>
@@ -21,6 +23,7 @@ export default function SectionMenu({ visible, onClose, onSelect }: Props) {
             <View style={s.center}>{item("events", "EVENTOS")}</View>
             <View style={s.pair}>{item("map", "MAPA")}{item("artists", "ARTISTAS")}</View>
           </View>
+          <View style={s.center}>{item("game", "JUEGO")}</View>
         </ScrollView>
         <View style={s.footer}>
           <Pressable accessibilityRole="button" accessibilityLabel="Abrir Cámara" onPress={() => onSelect("camera")} style={s.footerItem}><ReferenceIcon name="camera" size={48} /><Text style={s.footerLabel}>CÁMARA</Text></Pressable>

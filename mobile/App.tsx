@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Platform, Pressable, SafeAreaView, ScrollView, StatusBar as NativeStatusBar, StyleSheet, Text, TextInput, View } from "react-native";
 import { books } from "./src/data/catalogoInicial";
 import BooksScreen from "./src/screens/BooksScreen";
+import GameScreen from "./src/screens/GameScreen";
 import HomeScreen from "./src/screens/HomeScreen";
 import AssistantScreen from "./src/screens/AssistantScreen";
 import LoginScreen from "./src/screens/LoginScreen";
@@ -12,7 +13,7 @@ import SectionMenu, { type MenuDestination } from "./src/components/SectionMenu"
 import { ReferenceIcon } from "./src/components/ReferenceArt";
 import { localContentRepository } from "./src/services/localContentRepository";
 
-type Screen = "home" | "menu" | "books" | "events" | "map" | "artists" | "exchange" | "assistant" | "camera";
+type Screen = "home" | "menu" | "books" | "events" | "map" | "artists" | "exchange" | "assistant" | "camera" | "game";
 type EventTab = "agenda" | "anuncios";
 const announcements = ["¡Llegó Eduardo Sacheri al predio!", "Firma de ejemplares en el Auditorio B", "Nuevos títulos disponibles en Stand A"];
 
@@ -47,11 +48,12 @@ export default function App() {
   return <SafeAreaView style={[styles.safeArea, Platform.OS === "android" && { paddingTop: NativeStatusBar.currentHeight ?? 0, paddingBottom: 12 }]} >
     <StatusBar style="dark" />
     {screen === "home" && <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 6 }}><Text numberOfLines={1} style={{ color: "#0C4358", fontSize: 12, flex: 1 }}>Hola, {session.displayName || session.email?.split("@")[0] || "lector"}</Text><Pressable accessibilityRole="button" accessibilityLabel="Cerrar sesión" disabled={leaving} onPress={() => void signOut()} style={{ minHeight: 44, paddingHorizontal: 12, justifyContent: "center" }}><Text style={{ color: "#0C4358", fontWeight: "700" }}>{leaving ? "Saliendo…" : "Salir"}</Text></Pressable></View>}
-    {screen !== "home" && <TopBar title={titleFor(screen)} onBack={() => screen === "books" && selectedBookId ? setSelectedBookId(null) : openScreen("home")} />}
+    {screen !== "home" && screen !== "game" && <TopBar title={titleFor(screen)} onBack={() => screen === "books" && selectedBookId ? setSelectedBookId(null) : openScreen("home")} />}
     {screen === "home" && <HomeScreen onBook={(id) => { setSelectedBookId(id); openScreen("books"); }} onArtists={() => openScreen("artists")} />}
     {screen === "books" && <BooksScreen selectedBookId={selectedBookId} onSelect={setSelectedBookId} onCloseDetail={() => setSelectedBookId(null)} onExchange={() => openScreen("exchange")} />}
     {screen === "events" && <EventsScreen tab={eventTab} onTab={setEventTab} announcement={selectedAnnouncement} onAnnouncement={setSelectedAnnouncement} />}
     {screen === "map" && <MapScreen />}{screen === "artists" && <ArtistsScreen />}{screen === "exchange" && <ExchangeScreen bookTitle={books.find(book => book.id === selectedBookId)?.title} />}{screen === "assistant" && <AssistantScreen onBooks={() => selectSection("books")} onEvents={() => { setEventTab("agenda"); setSelectedAnnouncement(null); openScreen("events"); }} />}
+    {screen === "game" && <GameScreen onExit={() => openScreen("home")} />}
     {screen === "camera" && <CameraScreen onBooks={() => selectSection("books")} />}
     <Pressable style={[styles.bookButton, { width: 76, height: 76, marginLeft: -38, borderWidth: 0, backgroundColor: "transparent" }]} onPress={() => setMenuOpen(true)} accessibilityRole="button" accessibilityLabel="Abrir menú de secciones" accessibilityState={{ expanded: menuOpen }}><ReferenceIcon name="bookClosed" size={76} /></Pressable>
     <SectionMenu visible={menuOpen} onClose={() => setMenuOpen(false)} onSelect={selectSection} />
