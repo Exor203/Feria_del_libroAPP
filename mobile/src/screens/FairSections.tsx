@@ -34,8 +34,8 @@ export function EventsPreview({ initialTab }: { initialTab: "agenda" | "anuncios
       <Pill label="Volver al listado" onPress={() => setDetail(undefined)} />
       <View style={ui.card}><Text style={ui.heading}>{detail[2]}</Text><Text style={ui.body}>{detail[0]} Oct · {detail[1]}</Text><Text style={ui.body}>{detail[3]}</Text></View>
     </> : <>
-      <View style={ui.row}><Pill label="Agenda" active={tab === "agenda"} onPress={() => setTab("agenda")} /><Pill label="Anuncios" active={tab === "anuncios"} onPress={() => setTab("anuncios")} /></View>
-      {(tab === "agenda" ? agenda : notices).map((item, index) => <Pressable key={item.join()} accessibilityRole="button" onPress={() => setDetail(item)} style={[ui.card, { flexDirection: "row", alignItems: "center", padding: 0, paddingRight: 12, overflow: "hidden" }]}>
+      <View style={ui.row}><View style={{ flex: 1 }}><Pill label="Agenda" active={tab === "agenda"} onPress={() => setTab("agenda")} /></View><View style={{ flex: 1 }}><Pill label="Anuncios" active={tab === "anuncios"} onPress={() => setTab("anuncios")} /></View></View>
+      {(tab === "agenda" ? agenda : notices).map((item, index) => <Pressable key={item.join()} accessibilityRole="button" onPress={() => setDetail(item)} style={[ui.card, { flexDirection: "row", alignItems: "center", padding: 0, paddingRight: 12, overflow: "hidden", borderRadius: 17 }]}>
         {tab === "anuncios" && index === 0 ? <Image source={artists[1].image} style={{ width: 68, height: 86 }} /> :
           <View style={{ width: 68, minHeight: 86, justifyContent: "center", backgroundColor: item[0] === "01" ? "#F34F43" : "#203C78" }}>
             <Text style={{ color: "white", fontWeight: "800", fontSize: 21, textAlign: "center" }}>{item[0]}{"\n"}Oct</Text>
@@ -44,20 +44,22 @@ export function EventsPreview({ initialTab }: { initialTab: "agenda" | "anuncios
           <Text style={{ color: item[0] === "01" ? "#AA392E" : "#203C78" }}>{item[1]}</Text>
           <Text style={[ui.heading, { fontSize: 17 }]}>{item[2]}</Text>
           <Text style={ui.body}>{item[3]}</Text>
-        </View><Text style={ui.heading}>›</Text>
+        </View><Text style={[ui.heading, { fontSize: 32 }]}>›</Text>
       </Pressable>)}
     </>}
-    <Text style={ui.body}>Agenda y anuncios de demostración.</Text>
+    <Text accessibilityLabel="Agenda y anuncios de demostración" style={{ color: "#064057", fontSize: 11 }}>Datos de demostración</Text>
   </FairScroll></Enter>;
 }
 
 const works = [
   ["El secreto de sus ojos", require("../../Portada de libros/El secreto de sus ojos.jpg")],
+  ["Qué quedará de nosotros", require("../../assets/mockups/que-quedara.jpg")],
   ["La pregunta de sus ojos", require("../../Portada de libros/la-pregunta-de-sus-ojos.webp")],
 ] as const;
 
 export function ArtistsPreview() {
   const [query, setQuery] = useState("");
+  const [availableOnly, setAvailableOnly] = useState(false);
   const [filter, setFilter] = useState<string>();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selected, setSelected] = useState<(typeof artists)[number]>();
@@ -70,7 +72,7 @@ export function ArtistsPreview() {
     {selected ? <>
       <Pill label="Volver a artistas" onPress={() => setSelected(undefined)} />
       <Image resizeMode={selected === artists[1] ? "cover" : "contain"} source={selected === artists[1] ? require("../../assets/mockups/sacheri.png") : selected.image} accessibilityLabel={selected.name} style={{ width: "100%", height: 225, borderRadius: 18 }} />
-      <Heading title={selected.name} subtitle={selected === artists[1] ? "Escritor y guionista" : selected.genre} />
+      <View><Text style={[ui.title, { textAlign: "left" }]}>{selected.name}</Text><Text style={[ui.heading, { fontWeight: "400" }]}>{selected === artists[1] ? "Escritor y guionista" : selected.genre}</Text></View>
       {selected === artists[1] && <>
         <Text style={ui.body}>Escritor argentino y autor de La pregunta de sus ojos. Sus historias exploran la memoria, la amistad y la vida cotidiana.</Text>
         <Text style={ui.heading}>Obras destacadas</Text>
@@ -81,12 +83,12 @@ export function ArtistsPreview() {
     </> : <>
       <Heading title="Artistas" subtitle="Conocé a tus artistas favoritos" />
       <TextInput style={ui.input} accessibilityLabel="Buscar autores" placeholder="Buscar autores" value={query} onChangeText={setQuery} />
-      <Pill label={filter ?? "Filtrar por género"} onPress={() => setFiltersOpen(value => !value)} />
+      <View style={ui.row}><Pill label={filter ?? "☷ Filtro"} active onPress={() => setFiltersOpen(value => !value)} /><Pill label={availableOnly ? "Disponibles ✓" : "Disponibilidad ⌄"} active={availableOnly} onPress={() => setAvailableOnly(value => !value)} /></View>
       {filtersOpen && <View style={ui.row}>{[undefined, ...new Set(artists.map(artist => artist.genre))].map(genre => <Pill key={genre ?? "all"} active={genre === filter} label={genre ?? "Todos"} onPress={() => { setFilter(genre); setFiltersOpen(false); }} />)}</View>}
-      {artists.filter(artist => (!filter || artist.genre === filter) && normalize(artist.name).includes(normalize(query.trim()))).map(artist => <Pressable key={artist.name} accessibilityRole="button" onPress={() => setSelected(artist)} style={[ui.card, { flexDirection: "row", padding: 0, alignItems: "center", paddingRight: 12, overflow: "hidden" }]}>
+      {artists.filter(artist => (!availableOnly || artist === artists[1]) && (!filter || artist.genre === filter) && normalize(artist.name).includes(normalize(query.trim()))).map(artist => <Pressable key={artist.name} accessibilityRole="button" onPress={() => setSelected(artist)} style={[ui.card, { flexDirection: "row", padding: 0, alignItems: "center", paddingRight: 12, overflow: "hidden" }]}>
         <Image source={artist.image} style={{ width: 88, height: 88 }} />
         <View style={{ flex: 1, paddingVertical: 8 }}><Text style={ui.heading}>{artist.name}</Text><Text style={ui.body}>{artist.genre}</Text></View>
-        <Text style={ui.heading}>›</Text>
+        <Text style={[ui.heading, { fontSize: 32 }]}>›</Text>
       </Pressable>)}
     </>}
   </FairScroll></Enter>;
@@ -100,7 +102,7 @@ export function MapPreview() {
       {[["#E90085", "Stands"], ["#C5EA58", "Escenario"], ["#9DD9F8", "Servicios"], ["#FF9A00", "Aulas"]].map(([color, title]) => <View key={title} style={ui.row}>
         <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: color }} /><Text style={ui.body}>{title}</Text>
       </View>)}
-      <Text style={ui.body}>Escaleras · Baños · Salida</Text>
+      <View style={{ borderTopWidth: 2, borderColor: "#064057", gap: 5, paddingTop: 8 }}><Text style={ui.body}>▧  Escaleras</Text><Text style={ui.body}>♟  Baños</Text><Text style={ui.body}>🔴  Salida</Text></View>
     </View>
     <Image source={require("../../assets/mockups/plano.png")} resizeMode="contain" accessibilityLabel="Plano de referencia del predio" style={{ width: "100%", aspectRatio: 380 / 266 }} />
     <Text style={ui.body}>Plano de referencia.</Text>

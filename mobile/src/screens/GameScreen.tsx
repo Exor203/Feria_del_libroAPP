@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, BackHandler, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useFonts, Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold, Nunito_900Black } from "@expo-google-fonts/nunito";
-import { Enter } from "../components/FairUi";
+import { Enter, Heading } from "../components/FairUi";
 import GameIcon from "../components/GameIcon";
+import { MenuArt } from "../components/MenuArt";
 import { readerQuestions } from "../data/readerQuestions";
 import { advantageLabel, categories, fiftyFifty, pickQuestion, roundMs, scoreAnswer, type Advantage } from "../services/readerGame";
 
@@ -126,74 +127,72 @@ export default function GameScreen({ onExit, onRoundMode }: { onExit: () => void
   useEffect(() => { onRoundMode(inRound); return () => onRoundMode(false); }, [inRound, onRoundMode]);
   const correct = Boolean(result?.spaces);
   return <View style={s.screen}>
-    <View style={s.bar}>
+    {!inRound && <View style={s.bar}>
       <Pressable accessibilityRole="button" accessibilityLabel="Volver" onPress={back} hitSlop={8} style={s.back}>
         <Text style={s.barText}>‹ Volver</Text>
       </Pressable>
-      <Text style={s.barText}>JUEGO</Text>
-      <View style={s.spacer} />
-    </View>
-    <Enter change={page === "feedback" ? "question" : page}><ScrollView key={page === "feedback" ? "question" : page} contentContainerStyle={s.content}>
+    </View>}
+    <Enter change={page === "feedback" ? "question" : page}><ScrollView key={page === "feedback" ? "question" : page} contentContainerStyle={[s.content, inRound && { paddingTop: page === "result" ? 56 : 72, flexGrow: 1 }]} >
       {page === "start" && <>
         <View style={s.hero}>
-          <Text accessibilityRole="header" style={s.title}>La Ruta del Lector</Text>
+          <View style={{ alignSelf: "stretch" }}><Heading title="Juego" subtitle="Trivia literaria de la feria" /></View>
           <Image source={require("../../assets/mockups/juego.png")} style={{ width: "100%", aspectRatio: 364 / 205 }} resizeMode="contain" accessibilityIgnoresInvertColors />
-          <Text style={s.body}>Respondé preguntas literarias en la app y avanzá tu ficha en el tablero físico.</Text>
-          <Text style={s.label}>2 a 4 jugadores</Text>
+          <View style={s.intro}><GameIcon trophy size={58} /><Text style={[s.introText, s.label]}>Un juego de preguntas y respuestas sobre libros, autores, editoriales y todo el mundo literario</Text></View>
+          <View style={s.intro}><Text style={s.people}>♟♟</Text><Text style={[s.introText, s.label]}>2 a 4 jugadores</Text></View>
         </View>
-        <Button label="Jugar" onPress={next} primary />
+        <Button label="Jugar   →" onPress={next} primary />
         <Button label="¿Cómo se juega?" onPress={() => setPage("rules")} />
-        <View style={s.categories}>{categories.map(category => <Badge key={category} text={category} color={accent[category]} />)}</View>
+        <View style={s.categories}>{categories.map((category, index) => <Badge key={category} text={["♙", "♧", "▱", "⌂"][index] + "  " + category} color={petrol} />)}</View>
       </>}
       {page === "rules" && <>
-        <Text accessibilityRole="header" style={[s.title, fonts && { fontFamily: "Nunito_900Black", fontWeight: "normal" }]}>¿Cómo se juega?</Text>
-        <View style={s.card}>
+        <Text accessibilityRole="header" style={[s.rulesTitle, fonts && { fontFamily: "Nunito_900Black", fontWeight: "normal" }]}>¿Cómo se juega?</Text>
+        <View style={s.rulesBlock}>
           <Text style={[s.heading, fonts && { fontFamily: "Nunito_700Bold", fontWeight: "normal" }]}>Reglas</Text>
           <Text style={[s.rulesBody, fonts && { fontFamily: "Nunito_400Regular" }]}>Cada jugador pone su ficha en el punto de inicio. En tu turno, tenés 30 segundos para responder una pregunta aleatoria.</Text>
           <Text style={[s.rulesBody, fonts && { fontFamily: "Nunito_400Regular" }]}>• Hasta 10 s: avanzá 3 casilleros.{"\n"}• Más de 10 y hasta 20 s: avanzá 2.{"\n"}• Más de 20 s: avanzá 1 si acertás a tiempo.{"\n"}• Si errás o se acaba el tiempo: 0 casilleros.</Text>
           <Text style={[s.rulesBody, fonts && { fontFamily: "Nunito_400Regular" }]}>Pasale el teléfono a quien sigue y tocá Siguiente cuando esté listo. El reloj arranca enseguida.</Text>
           <Text style={[s.rulesBody, fonts && { fontFamily: "Nunito_600SemiBold" }]}>Las insignias se consiguen en sectores del tablero físico. Reuní 4 de géneros distintos y volvé al centro para el desafío final.</Text>
         </View>
-        <View style={s.card}>
+        <View style={s.rulesBlock}>
           <Text style={[s.heading, fonts && { fontFamily: "Nunito_700Bold", fontWeight: "normal" }]}>Ventajas</Text>
           <Text style={[s.rulesBody, fonts && { fontFamily: "Nunito_400Regular" }]}>Si acertás en hasta 10 s, ganás una ventaja. Si acertás después de 10 s y hasta los 20 s, tenés un 50 % de probabilidad de ganar una. Se guardan para los próximos turnos en el teléfono y podés usar una por pregunta. Al ganar, las probabilidades son 40 % Pista, 40 % Tiempo extra y 20 % 50/50.</Text>
           <Text style={[s.rulesBody, fonts && { fontFamily: "Nunito_400Regular" }]}>Pista · Muestra una ayuda sobre la pregunta.{"\n"}Tiempo extra · Suma 10 s si la ganaste en el primer tramo o 5 s si fue en el segundo.{"\n"}50/50 · Elimina dos opciones incorrectas.</Text>
         </View>
-        <Button label="Jugar" onPress={next} primary />
+        <Button label="Jugar   →" onPress={next} primary />
       </>}
       {round && (page === "question" || page === "feedback") && <>
         <View style={s.status}>
           <Badge text={round.question.category} color={accent[round.question.category]} />
-          <Badge text={`00:${String(remaining).padStart(2, "0")}`} color={remaining <= 5 ? "#A34530" : petrol} />
+          <Badge text={`00:${String(remaining).padStart(2, "0")}`} color={remaining <= 5 ? "#A34530" : accent[round.question.category]} />
         </View>
-        <Text accessibilityRole="header" style={[s.title, { textAlign: "center", fontSize: 33, marginVertical: 14 }]}>{round.question.prompt}</Text>
-        <Image source={require("../../assets/mockups/buho.png")} style={{ width: 118, height: 136, alignSelf: "center" }} resizeMode="contain" accessibilityIgnoresInvertColors />
+        <Text accessibilityRole="header" style={[s.title, { textAlign: "center", color: "#101010", fontSize: 37, fontWeight: "600", marginVertical: 15 }]}>{round.question.prompt}</Text>
+        <Image source={require("../../assets/mockups/buho.png")} style={{ width: 138, height: 157, alignSelf: "center" }} resizeMode="contain" accessibilityIgnoresInvertColors />
         {used?.kind === "Pista" && <View style={s.card}><Text style={s.body}>Pista · {round.question.hint}</Text></View>}
         {round.options.map((option, index) => !hidden.includes(option) &&
-          <Button key={option} label={`${"ABCD"[index]} · ${option}`}
+          <Button key={option} optionLetter={"ABDC"[index]} label={option}
             primary={option === selected} color={option === selected ? (correct ? "#18734F" : "#A34530") : petrol}
             disabled={page === "feedback"} onPress={() => finish(option, Date.now())} />
         )}
-        {page === "feedback" && <Text accessibilityLiveRegion="polite" style={s.label}>{correct ? "¡Correcto!" : "Respuesta incorrecta"}</Text>}
+        {page === "feedback" && <Text accessibilityLiveRegion="polite" style={s.feedback}>{correct ? "¡Correcto!" : "Respuesta incorrecta"}</Text>}
 
       </>}
       {round && page === "result" && result && <>
         <View style={s.hero}>
-          <View style={{ width: 100, height: 100, borderRadius: 50, backgroundColor: correct ? "#18734F" : "#A34530", alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 62, color: cream }}>{correct ? "✓" : "×"}</Text></View>
-          <Text accessibilityRole="header" style={[s.title, { color: correct ? "#18734F" : "#A34530" }]}>
+          <View style={{ width: 142, height: 142, borderRadius: 71, backgroundColor: correct ? "#18734F" : "#A34530", alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 94, color: cream }}>{correct ? "✓" : "×"}</Text></View>
+          <Text accessibilityRole="header" style={[s.title, { color: correct ? "#18734F" : "#A34530", textAlign: "center", fontSize: 41 }]}>
             {correct ? "¡Correcto!" : selected === null ? "Se terminó el tiempo" : "Respuesta incorrecta"}
           </Text>
-          <Text style={s.body}>Respuesta correcta · {round.question.correct}</Text>
-          <Text style={s.heading}>{result.spaces === 0 ? "No avanzás" : `Avanzá ${result.spaces} ${result.spaces === 1 ? "casillero" : "casilleros"}`}</Text>
-          {result.reward && <Badge text={`Ganaste ${advantageLabel(result.reward)}`} color="#18734F" />}
+          <Text style={s.resultText}>La respuesta correcta era{"\n"}“{round.question.correct}”</Text>
+          <Text style={[s.resultText, correct && { color: "#18734F" }]}>{result.spaces === 0 ? "No avanzás" : `Avanzá ${result.spaces} ${result.spaces === 1 ? "casillero" : "casilleros"}`}</Text>
+          {result.reward && <Text style={s.resultText}>Recibís {advantageLabel(result.reward)} por contestar rápido</Text>}
         </View>
-        <View style={s.card}><Text style={s.heading}>Dato curioso</Text><Text style={s.body}>{round.question.fact}</Text></View>
-        <Text style={s.body}>Pasale el teléfono a quien sigue antes de tocar Siguiente.</Text>
+        <Text style={s.resultText}>Dato curioso: {round.question.fact}</Text>
+        <View style={{ flex: 1, minHeight: 30 }} />
         <Button label="Siguiente" onPress={next} primary />
       </>}
     </ScrollView></Enter>
     {inRound && <Pressable accessibilityRole="button" accessibilityLabel="Abrir ventajas del juego" onPress={() => setShowAdvantages(true)} style={s.dice}>
-      <GameIcon size={68} />
+      <MenuArt name="game" size={65} />
     </Pressable>}
     <Modal visible={showAdvantages} transparent animationType="slide" onRequestClose={() => setShowAdvantages(false)}>
       <View style={s.overlay}>
@@ -216,16 +215,18 @@ export default function GameScreen({ onExit, onRoundMode }: { onExit: () => void
   </View>;
 }
 
-function Button({ label, onPress, primary, disabled, color = petrol }: {
+function Button({ label, onPress, primary, disabled, optionLetter, color = petrol }: {
   label: string;
   onPress: () => void;
   primary?: boolean;
   disabled?: boolean;
   color?: string;
+  optionLetter?: string;
 }) {
   return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress}
-    style={[s.button, disabled && !primary && { opacity: 0.55 }, { borderColor: color, backgroundColor: primary ? color : cream }]}>
-    <Text style={[s.label, { color: primary ? cream : color }]}>{label}</Text>
+    style={[s.button, optionLetter && s.option, disabled && !primary && !optionLetter && { opacity: 0.55 }, { borderColor: color, backgroundColor: primary ? color : cream }]}>
+    {optionLetter && <View style={[s.letter, { backgroundColor: color }]}><Text style={s.letterText}>{optionLetter}</Text></View>}
+    <Text style={[s.buttonText, optionLetter && { flex: 1, paddingRight: 44 }, { color: primary ? cream : color }]}>{label}</Text>
   </Pressable>;
 }
 
@@ -242,7 +243,17 @@ const s = StyleSheet.create({
   bar: { backgroundColor: "transparent", flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16 },
   back: { minHeight: 48, minWidth: 76, justifyContent: "center" },
   barText: { color: petrol, fontSize: 20, fontWeight: "800" },
-  spacer: { width: 76 },
+  rulesTitle: { fontSize: 38, color: petrol, fontWeight: "800", textAlign: "center", marginTop: 38, marginBottom: 12 },
+  rulesBlock: { paddingHorizontal: 18, gap: 9 },
+  intro: { flexDirection: "row", gap: 14, alignItems: "center", alignSelf: "stretch" },
+  introText: { flex: 1 },
+  people: { width: 58, fontSize: 24, textAlign: "center", color: "#F2A625" },
+  feedback: { color: petrol, textAlign: "center", fontWeight: "700" },
+  resultText: { color: "#171717", textAlign: "center", fontSize: 17, lineHeight: 23 },
+  option: { flexDirection: "row", alignItems: "center", paddingVertical: 0, paddingHorizontal: 0, overflow: "hidden" },
+  letter: { width: 42, height: 42, borderRadius: 21, justifyContent: "center", alignItems: "center" },
+  letterText: { color: cream, fontSize: 21, fontWeight: "800" },
+  buttonText: { textAlign: "center", fontSize: 20, fontWeight: "800" },
   content: { padding: 20, paddingBottom: 112, gap: 14, width: "100%", maxWidth: 600, alignSelf: "center" },
   hero: { alignItems: "center", gap: 12, paddingVertical: 14 },
   title: { color: petrol, fontSize: 29, fontWeight: "900" },
@@ -250,10 +261,10 @@ const s = StyleSheet.create({
   body: { color: "#26363C", fontSize: 16, lineHeight: 23 },
   label: { color: petrol, fontSize: 16, fontWeight: "800" },
   card: { backgroundColor: "#FFFFFF", borderRadius: 16, padding: 16, gap: 10 },
-  button: { minHeight: 46, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 2, borderRadius: 22, justifyContent: "center" },
-  categories: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 8 },
+  button: { minHeight: 46, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 2, borderRadius: 22, justifyContent: "center", marginHorizontal: 9 },
+  categories: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 8, borderTopWidth: 2, borderTopColor: petrol, paddingTop: 12 },
   status: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", gap: 8 },
-  badge: { borderWidth: 1, borderRadius: 18, paddingVertical: 6, paddingHorizontal: 12, fontWeight: "800" },
+  badge: { borderWidth: 2, borderRadius: 24, minWidth: 125, textAlign: "center", paddingVertical: 10, paddingHorizontal: 12, fontWeight: "800" },
   advantageArea: { gap: 10, alignItems: "stretch" },
   advantageButton: { flexDirection: "row", alignItems: "center", alignSelf: "center", gap: 8, minHeight: 48 },
 });

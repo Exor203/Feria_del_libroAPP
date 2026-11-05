@@ -15,8 +15,8 @@ export function FairBackdrop({ section }: { section: string }) {
   return <View pointerEvents="none" style={StyleSheet.absoluteFill}>
     <Svg width="100%" height="100%">
       <Defs><LinearGradient id="section" x1="0%" y1="0%" x2="80%" y2="100%">
-        <Stop offset="0%" stopColor={tone} /><Stop offset="40%" stopColor="#FFFFFF" />
-        <Stop offset="100%" stopColor={tone} />
+        <Stop offset="0%" stopColor={section === "home" || section === "login" ? "#FFFFFF" : tone} /><Stop offset={section === "home" || section === "login" ? "28%" : "42%"} stopColor="#FFFFFF" />
+        <Stop offset={section === "home" || section === "login" ? "80%" : "100%"} stopColor={tone} />
       </LinearGradient></Defs>
       <Rect width="100%" height="100%" fill="url(#section)" />
     </Svg>

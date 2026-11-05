@@ -1,6 +1,8 @@
 import type { ImageSourcePropType } from "react-native";
 export const bookCovers: Record<string, ImageSourcePropType | undefined> = {
   "el-eternauta": require("../../Portada de libros/Eternauta.webp"),
+  "viaje": require("../../assets/mockups/viaje.png"),
+  "rabia": require("../../assets/mockups/rabia.png"),
   "dune": require("../../Portada de libros/Dune.jpg"),
   "amazing": require("../../Portada de libros/Amazing Fantasy.jpg"),
   "superman": require("../../Portada de libros/80536-18005-105403-1-action-comics.jpg"),

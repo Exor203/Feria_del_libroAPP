@@ -15,11 +15,10 @@ export default function LoginScreen({ onAuthenticated }: Props) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmation, setConfirmation] = useState("");
   const [visiblePassword, setVisiblePassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { width, height } = useWindowDimensions();
-  const changeMode = (next: "welcome" | AuthMode) => { if (busyRef.current) return; setMode(next); setNotice(null); setError(null); setPassword(""); setConfirmation(""); setVisiblePassword(false); };
+  const changeMode = (next: "welcome" | AuthMode) => { if (busyRef.current) return; setMode(next); setNotice(null); setError(null); setPassword(""); setVisiblePassword(false); };
   useEffect(() => {
     if (mode === "welcome") return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => { changeMode("welcome"); return true; });
@@ -27,13 +26,13 @@ export default function LoginScreen({ onAuthenticated }: Props) {
   }, [mode]);
   const submit = async () => {
     if (mode === "welcome" || busyRef.current) return;
-    const message = validateAuthForm(mode, { name, email, password, confirmation });
+    const message = validateAuthForm(mode, { name, email, password, confirmation: password });
     setError(message); setNotice(null);
     if (message) return;
     busyRef.current = true; setBusy(true);
     try {
       const user = mode === "register" ? await registerAccount(name, email, password) : await loginAccount(email, password);
-      setPassword(""); setConfirmation(""); onAuthenticated(user);
+      setPassword(""); onAuthenticated(user);
     } catch (problem) { setError(authErrorMessage(problem)); }
     finally { busyRef.current = false; setBusy(false); }
   };
@@ -48,7 +47,7 @@ export default function LoginScreen({ onAuthenticated }: Props) {
   };
   const social = (provider: string) => Alert.alert(`Ingresar con ${provider}`, "Este acceso todavía no está conectado en la app. Podés crear una cuenta o iniciar sesión con correo y contraseña.");
   return <KeyboardAvoidingView style={s.screen} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[s.content, { minHeight: Math.max(500, height - 60) }]}>
+    <ScrollView key={mode} keyboardShouldPersistTaps="handled" contentContainerStyle={[s.content, { minHeight: Math.max(500, height - 60) }]}>
       {mode === "welcome" ? <>
         <View style={s.logo}><FeriaLogo width={Math.min(width - 72, 320)} /></View>
         <Text accessibilityRole="header" style={s.welcome}>BIENVENIDOS</Text>
@@ -63,16 +62,19 @@ export default function LoginScreen({ onAuthenticated }: Props) {
         <Text style={s.note}>Creá tu cuenta para participar de la comunidad de la feria.</Text>
       </> : <>
         <Pressable accessibilityRole="button" onPress={() => changeMode("welcome")} style={s.back}><Text style={s.link}>‹ Volver</Text></Pressable>
-        <View style={s.formLogo}><FeriaLogo width={132} /></View>
-        <Text accessibilityRole="header" style={s.welcome}>{mode === "register" ? "CREAR CUENTA" : "INICIAR SESIÓN"}</Text>
-        <Text style={s.demoNotice}>{mode === "register" ? "Usá un correo al que tengas acceso. Tu cuenta se crea en Firebase." : "Ingresá con el correo y la contraseña de tu cuenta."}</Text>
-        {mode === "register" && <View style={s.field}><Text style={s.label}>Nombre</Text><TextInput accessibilityLabel="Nombre" editable={!busy} value={name} onChangeText={setName} style={s.input} autoComplete="name" placeholder="Tu nombre" placeholderTextColor="#657173" /></View>}
-        <View style={s.field}><Text style={s.label}>Correo electrónico</Text><TextInput accessibilityLabel="Correo electrónico" editable={!busy} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" style={s.input} placeholder="nombre@ejemplo.com" placeholderTextColor="#657173" /></View>
-        <View style={s.field}><Text style={s.label}>Contraseña</Text><View style={s.passwordRow}><TextInput accessibilityLabel="Contraseña" editable={!busy} value={password} onChangeText={setPassword} secureTextEntry={!visiblePassword} autoCapitalize="none" autoCorrect={false} autoComplete="off" style={s.passwordInput} placeholder="Al menos 6 caracteres" placeholderTextColor="#657173" /><Pressable accessibilityRole="button" accessibilityLabel={visiblePassword ? "Ocultar contraseña" : "Mostrar contraseña"} onPress={() => setVisiblePassword(value => !value)} style={s.showPassword}><Text style={s.link}>{visiblePassword ? "Ocultar" : "Ver"}</Text></Pressable></View></View>
-        {mode === "register" && <View style={s.field}><Text style={s.label}>Repetir contraseña</Text><TextInput accessibilityLabel="Repetir contraseña" editable={!busy} value={confirmation} onChangeText={setConfirmation} secureTextEntry={!visiblePassword} autoCapitalize="none" autoCorrect={false} autoComplete="off" style={s.input} /></View>}
+        <View style={[s.formLogo, mode === "register" && s.registerLogo]}><FeriaLogo width={mode === "register" ? Math.min(width - 115, 275) : 132} /></View>
+        {mode === "login" && <Text accessibilityRole="header" style={s.welcome}>INICIAR SESIÓN</Text>}
+        {mode === "login" && <Text style={s.demoNotice}>Ingresá con el correo y la contraseña de tu cuenta.</Text>}
+        <View style={s.field}>{mode === "login" && <Text style={s.label}>Correo electrónico</Text>}<TextInput accessibilityLabel="Correo electrónico" editable={!busy} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" style={[s.input, mode === "register" && s.registerInput]} placeholder={mode === "register" ? "Correo" : "nombre@ejemplo.com"} placeholderTextColor="#657173" /></View>
+        <View style={s.field}>{mode === "login" && <Text style={s.label}>Contraseña</Text>}<View style={[s.passwordRow, mode === "register" && s.registerInput]}><TextInput accessibilityLabel="Contraseña" editable={!busy} value={password} onChangeText={setPassword} secureTextEntry={!visiblePassword} autoCapitalize="none" autoCorrect={false} autoComplete="off" style={[s.passwordInput, mode === "register" && { fontSize: 24 }]} placeholder={mode === "register" ? "Contraseña" : "Al menos 6 caracteres"} placeholderTextColor="#657173" /><Pressable accessibilityRole="button" accessibilityLabel={visiblePassword ? "Ocultar contraseña" : "Mostrar contraseña"} onPress={() => setVisiblePassword(value => !value)} style={s.showPassword}><Text style={s.link}>{visiblePassword ? "Ocultar" : "Ver"}</Text></Pressable></View></View>
+        {mode === "register" && <View style={s.field}><TextInput accessibilityLabel="Usuario" editable={!busy} value={name} onChangeText={setName} style={[s.input, s.registerInput]} autoComplete="name" placeholder="Usuario" placeholderTextColor="#657173" /></View>}
         {error && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={s.error}>{error}</Text>}
         {notice && <Text accessibilityLiveRegion="polite" style={s.note}>{notice}</Text>}
-        <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy || !authConfigured, busy }} disabled={busy || !authConfigured} onPress={() => void submit()} style={[s.primary, (busy || !authConfigured) && { opacity: 0.6 }]}>{busy ? <ActivityIndicator color="white" /> : <Text style={s.submitText}>{mode === "register" ? "Crear cuenta" : "Iniciar sesión"}</Text>}</Pressable>
+        {mode === "register" && <View style={[s.socialRow, { marginVertical: 12 }]}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Ingresar con Google" onPress={() => social("Google")} disabled={busy} style={[s.social, s.gold]}><SocialLogo provider="Google" /></Pressable>
+          <View style={[s.social, s.gold]} /><View style={[s.social, s.gold]} />
+        </View>}
+        <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy || !authConfigured, busy }} disabled={busy || !authConfigured} onPress={() => void submit()} style={[s.primary, (busy || !authConfigured) && { opacity: 0.6 }]}>{busy ? <ActivityIndicator color="white" /> : <Text style={s.submitText}>{mode === "register" ? "Registro" : "Iniciar sesión"}</Text>}</Pressable>
         {!authConfigured && <Text style={s.error}>Falta completar la configuración de acceso de la app.</Text>}
         {mode === "login" && <Pressable accessibilityRole="button" disabled={busy || !authConfigured} onPress={() => void recover()} style={s.switch}><Text style={s.link}>Olvidé mi contraseña</Text></Pressable>}
         <Pressable accessibilityRole="button" onPress={() => changeMode(mode === "login" ? "register" : "login")} style={s.switch}><Text style={s.link}>{mode === "login" ? "¿No tenés cuenta? Crear cuenta" : "¿Ya tenés cuenta? Iniciar sesión"}</Text></Pressable>
@@ -82,7 +84,8 @@ export default function LoginScreen({ onAuthenticated }: Props) {
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#FFF6E5" }, content: { paddingHorizontal: 30, paddingTop: 30, paddingBottom: 30, width: "100%", maxWidth: 480, alignSelf: "center", justifyContent: "center" },
+  screen: { flex: 1, backgroundColor: "transparent" }, content: { paddingHorizontal: 30, paddingTop: 30, paddingBottom: 30, width: "100%", maxWidth: 480, alignSelf: "center", justifyContent: "center" },
+  registerLogo: { marginTop: 28, marginBottom: 54 }, registerInput: { backgroundColor: "#F8F6ED", borderRadius: 28, fontSize: 24, paddingHorizontal: 18 }, gold: { backgroundColor: "#EDA129" },
   logo: { alignItems: "center", marginBottom: 48 }, formLogo: { alignItems: "center", marginBottom: 22 }, welcome: { color: "#0C4358", fontSize: 28, fontWeight: "800", textAlign: "center", marginBottom: 30 },
   buttons: { gap: 12 }, primary: { backgroundColor: "#0C4358", borderRadius: 32, minHeight: 56, justifyContent: "center", alignItems: "center", paddingHorizontal: 20, paddingVertical: 10 }, primaryText: { color: "white", fontSize: 25 }, submitText: { color: "white", fontSize: 19, fontWeight: "600" },
   divider: { flexDirection: "row", gap: 24, alignItems: "center", justifyContent: "center", marginTop: 26, marginBottom: 24 }, line: { height: 1.5, flex: 1, backgroundColor: "#0C4358", maxWidth: 92 }, or: { color: "#0C4358", fontSize: 24, fontWeight: "700" },

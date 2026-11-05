@@ -2,9 +2,9 @@
   "expo": {
     "name": "Feria del Libro",
     "slug": "feria-del-libro",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/feria-app-icon.png",
     "userInterfaceStyle": "light",
     "plugins": [["expo-camera", { "cameraPermission": "Permití usar la cámara para escanear el ISBN de un libro.", "recordAudioAndroid": false }]],
     "ios": {
@@ -12,16 +12,15 @@
     },
     "android": {
       "package": "com.exor203.feriadellibro",
+      "versionCode": 2,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#0B3F55",
+        "foregroundImage": "./assets/feria-adaptive-icon.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/feria-app-icon.png"
     }
   }
 }

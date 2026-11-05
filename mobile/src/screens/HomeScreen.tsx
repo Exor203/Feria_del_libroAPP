@@ -45,9 +45,9 @@ export default function HomeScreen({ onBooks, onBook, onArtists }: Props) {
 }
 
 const s = StyleSheet.create({
-  content: { padding: 20, paddingBottom: 120, width: "100%", maxWidth: 600, alignSelf: "center" },
+  content: { paddingHorizontal: 22, paddingTop: 8, paddingBottom: 120, width: "100%", maxWidth: 600, alignSelf: "center" },
   hero: { backgroundColor: "#0C4358", borderRadius: 30, minHeight: 205, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, paddingTop: 36, paddingBottom: 14 },
-  brand: { color: "#F4A62A", fontSize: 26, fontWeight: "800", textAlign: "center" }, tagline: { color: "white", fontSize: 19, textAlign: "center", marginTop: 8, minHeight: 50 },
+  brand: { color: "#F4A62A", fontSize: 26, fontWeight: "300", textAlign: "center" }, tagline: { color: "white", fontSize: 19, textAlign: "center", marginTop: 8, minHeight: 50 },
   controls: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 10 }, arrowButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" }, arrow: { color: "white", fontSize: 36, lineHeight: 40 },
   dotButton: { width: 30, height: 44, alignItems: "center", justifyContent: "center" }, dot: { backgroundColor: "white", borderRadius: 5, height: 7, width: 13 }, dotActive: { backgroundColor: "#F4A62A", width: 26 },
   calendar: { gap: 5, paddingTop: 10, paddingBottom: 4 }, day: { borderColor: "#0C4358", borderWidth: 1.5, borderRadius: 13, height: 77, paddingTop: 8, alignItems: "center" }, dayActive: { backgroundColor: "#0C4358" }, dayDate: { color: "#0C4358", fontSize: 11, fontWeight: "700" }, dayName: { color: "#0C4358", fontSize: 10, fontWeight: "700" }, dayTextActive: { color: "#F4A62A" },
