@@ -5,6 +5,21 @@ export const books: Book[] = [
   { id: "river-sing-me-home", title: "River Sing Me Home", author: "Eleanor Shearer", genres: ["Ficción histórica", "Drama"], synopsis: "Rachel abandona una plantación de Barbados para buscar a sus hijos." },
   { id: "batman", title: "Batman", author: "DC Comics", genres: ["Cómic", "Acción"], synopsis: "Historias del vigilante de Gotham y los desafíos que enfrenta para proteger la ciudad." },
 ];
+export const catalogExamples: Book[] = [
+  { id: "mafalda", title: "Mafalda: ¡La sopa!", author: "Quino", genres: ["Cómic"], synopsis: "" },
+  { id: "quijote", title: "Don Quijote de la Mancha", author: "Miguel de Cervantes", genres: ["Clásicos"], synopsis: "" },
+  { id: "habitos", title: "Hábitos atómicos", author: "James Clear", genres: ["Bienestar"], synopsis: "" },
+  { id: "harry", title: "Harry Potter y la Orden del Fénix", author: "J. K. Rowling", genres: ["Fantasía"], synopsis: "" },
+  { id: "spiderman", title: "The Amazing Spider-Man", author: "Marvel Comics", genres: ["Cómic"], synopsis: "" },
+  { id: "watchmen", title: "Watchmen", author: "Alan Moore y Dave Gibbons", genres: ["Cómic"], synopsis: "" },
+  { id: "yuggoth", title: "Relatos de Yuggoth", author: "Alan Moore", genres: ["Cómic"], synopsis: "" },
+  { id: "ingenio", title: "Juegos de ingenio", author: "John Katzenbach", genres: ["Suspenso"], synopsis: "" },
+  { id: "paciente", title: "La paciente silenciosa", author: "Alex Michaelides", genres: ["Suspenso"], synopsis: "" },
+  { id: "soledad", title: "La soledad", author: "Gabriel Rolón", genres: ["Ensayo"], synopsis: "" },
+  { id: "pinocho", title: "Pinocho", author: "Carlo Collodi", genres: ["Infantil"], synopsis: "" },
+  { id: "dune", title: "Dune", author: "Frank Herbert", genres: ["Ciencia ficción"], synopsis: "" },
+];
+
 export const inventory: InventoryItem[] = [
   { bookId: "el-eternauta", standId: "Stand A", status: "available", quantity: 12, updatedAt: "16/09 10:00" },
   { bookId: "river-sing-me-home", standId: "Stand B", status: "low_stock", quantity: 2, updatedAt: "16/09 10:00" },

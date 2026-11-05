@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { BackHandler, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
-import { books } from "../data/catalogoInicial";
+import { books, catalogExamples } from "../data/catalogoInicial";
+import { bookCovers } from "../data/bookCovers";
+import { Enter, Heading, Pill } from "../components/FairUi";
+import type { ShelfBook } from "../services/library";
+const catalog = [...books, ...catalogExamples];
+const normalize = (text: string) => text.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
 import { localContentRepository } from "../services/localContentRepository";
 import type { Book } from "../types/content";
 
-type Props = { selectedBookId: string | null; onSelect: (id: string) => void; onCloseDetail: () => void; onExchange: () => void };
+type Props = { selectedBookId: string | null; onSelect: (id: string) => void; onCloseDetail: () => void; onExchange: () => void; onSave?: (book: ShelfBook) => void };
 const reference = require("../../assets/books/catalog-reference.png");
 const detailReference = require("../../assets/books/detail-reference.png");
 const covers: Record<string, { x: number; y: number }> = {
@@ -13,9 +18,11 @@ const covers: Record<string, { x: number; y: number }> = {
   batman: { x: 263, y: 707 },
 };
 const releases: Record<string, string> = { "el-eternauta": "1957 – 1959", "river-sing-me-home": "2023", batman: "Consultar edición" };
-const genres = Array.from(new Set(books.flatMap(book => book.genres)));
+const genres = Array.from(new Set(catalog.flatMap(book => book.genres)));
 
 export function Cover({ book, width, detail = false }: { book: Book; width: number; detail?: boolean }) {
+  const supplied = bookCovers[book.id];
+  if (supplied) return <Image source={supplied} accessibilityLabel={`Portada de ${book.title}`} resizeMode={detail ? "contain" : "cover"} style={{ width, height: detail ? Math.min(width, 300) : width * 1.48, borderRadius: 11 }} />;
   const large = detail && book.id === "el-eternauta";
   const crop = large ? { x: 395, y: 164, width: 392, height: 307 } : { ...covers[book.id], width: 120, height: 180 };
   const scale = width / crop.width;
@@ -24,16 +31,17 @@ export function Cover({ book, width, detail = false }: { book: Book; width: numb
   </View>;
 }
 
-export default function BooksScreen({ selectedBookId, onSelect, onCloseDetail, onExchange }: Props) {
+export default function BooksScreen({ selectedBookId, onSelect, onCloseDetail, onExchange, onSave }: Props) {
+  const [savedId, setSavedId] = useState<string>();
   const [query, setQuery] = useState("");
   const [genre, setGenre] = useState<string | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [availabilityOpen, setAvailabilityOpen] = useState(false);
   const { width } = useWindowDimensions();
   const contentWidth = Math.min(width - 40, 560);
-  const coverWidth = (contentWidth - 24) / 3;
-  const found = useMemo(() => localContentRepository.searchBooks(query).filter(book => !genre || book.genres.includes(genre)), [query, genre]);
-  const selected = books.find(book => book.id === selectedBookId);
+  const coverWidth = Math.max(78, (contentWidth - 30) / 4);
+  const found = useMemo(() => catalog.filter(book => (!genre || book.genres.includes(genre)) && normalize([book.title, book.author, ...book.genres].join(" ")).includes(normalize(query.trim()))), [query, genre]);
+  const selected = catalog.find(book => book.id === selectedBookId);
   const openBook = (id: string) => { setAvailabilityOpen(false); onSelect(id); };
   useEffect(() => {
     if (!selectedBookId) return;
@@ -44,19 +52,22 @@ export default function BooksScreen({ selectedBookId, onSelect, onCloseDetail, o
   const row = (title: string, items: Book[], subtitle?: string) => <View key={title} style={s.section}>
     <Text style={s.sectionTitle}>{title}</Text>
     {subtitle && <Text style={s.hint}>{subtitle}</Text>}
-    <View style={s.row}>{items.map(book => <Pressable key={book.id} accessibilityRole="button" accessibilityLabel={`Ver ${book.title}, de ${book.author}`} onPress={() => openBook(book.id)} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.row}>{items.map(book => <Pressable key={book.id} accessibilityRole="button" accessibilityLabel={`Ver ${book.title}, de ${book.author}`} onPress={() => openBook(book.id)} style={({ pressed }) => ({ width: coverWidth, opacity: pressed ? 0.7 : 1 })}>
       <Cover book={book} width={coverWidth} />
-    </Pressable>)}</View>
+      <Text style={s.resultTitle} numberOfLines={2}>{book.title}</Text>
+      <Text style={s.hint} numberOfLines={2}>{book.author}</Text>
+    </Pressable>)}</ScrollView>
   </View>;
 
   if (selected) {
     const availability = localContentRepository.getBookAvailability(selected.id);
     const synopsis = selected.id === "el-eternauta" ? "El Eternauta es una historieta creada por Héctor Germán Oesterheld y Francisco Solano López.\n\nUna extraña y letal nevada cae sobre Buenos Aires y marca el inicio de una invasión extraterrestre. Juan Salvo y sus amigos se organizan para sobrevivir y resistir. La historia pone en el centro al héroe colectivo: la solidaridad y la lucha comunitaria frente a la amenaza." : selected.synopsis;
-    return <ScrollView key={selected.id} contentContainerStyle={s.content}>
+    return <Enter change={selected.id}><ScrollView key={selected.id} contentContainerStyle={s.content}>
       <Pressable accessibilityRole="button" onPress={onCloseDetail} style={s.back}><Text style={s.backText}>‹ Volver al catálogo</Text></Pressable>
-      <Text style={s.title}>{selected.title}</Text>
       <View>
         <Cover book={selected} width={contentWidth} detail />
+        <Text style={s.title}>{selected.title}</Text>
+        <Text style={s.body}>{selected.author}</Text>
         <View style={s.actions}>
           <Pressable accessibilityRole="button" accessibilityLabel={`Intercambiar ${selected.title}`} onPress={onExchange} style={s.action}><Text style={s.actionIcon}>↔</Text><Text style={s.actionLabel}>Intercambiar</Text></Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="Consultar disponibilidad y stand" accessibilityState={{ expanded: availabilityOpen }} onPress={() => setAvailabilityOpen(value => !value)} style={s.action}><Text style={s.actionIcon}>⌕</Text><Text style={s.actionLabel}>Disponibilidad</Text></Pressable>
@@ -68,16 +79,18 @@ export default function BooksScreen({ selectedBookId, onSelect, onCloseDetail, o
         {availability && <Text style={s.hint}>Última actualización: {availability.updatedAt}</Text>}
         <Text style={s.hint}>Datos de demostración; consultar en el stand.</Text>
       </View>}
-      <View><Text style={s.label}>LANZAMIENTO</Text><Text style={s.body}>{releases[selected.id]}</Text></View>
+      <View><Text style={s.label}>LANZAMIENTO</Text><Text style={s.body}>{releases[selected.id] ?? "Consultar edición"}</Text></View>
       <View><Text style={s.label}>GÉNEROS</Text><Text style={s.body}>{selected.genres.join(", ") + "."}</Text></View>
-      <View><Text style={s.label}>SINOPSIS</Text><Text style={s.body}>{synopsis}</Text></View>
-      <Text style={s.hint}>{selected.author}</Text>
-    </ScrollView>;
+      <View><Text style={s.label}>SINOPSIS</Text><Text style={s.body}>{synopsis || "Ficha de catálogo de prueba."}</Text></View>
+      {onSave && <Pill label="Guardar en mi lista" active onPress={() => { onSave(selected); setSavedId(selected.id); }} />}
+      {savedId === selected.id && <Text accessibilityLiveRegion="polite" style={s.body}>Guardado en tu perfil.</Text>}
+    </ScrollView></Enter>;
   }
 
   return <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
+    <Heading title="Libros" subtitle="Tu librería portátil" />
     <View style={s.search}>
-      <TextInput value={query} onChangeText={setQuery} placeholder="Buscar..." placeholderTextColor="#0C4358" accessibilityLabel="Buscar por título, autor o género" returnKeyType="search" style={s.input} />
+      <TextInput value={query} onChangeText={setQuery} placeholder="Buscar libros, autores o géneros…" placeholderTextColor="#0C4358" accessibilityLabel="Buscar por título, autor o género" returnKeyType="search" style={s.input} />
       {!!query && <Pressable accessibilityRole="button" accessibilityLabel="Limpiar búsqueda" onPress={() => setQuery("")} style={s.clear}><Text style={s.backText}>×</Text></Pressable>}
     </View>
     <Pressable accessibilityRole="button" accessibilityState={{ expanded: filterOpen }} onPress={() => setFilterOpen(value => !value)} style={s.filterButton}>
@@ -88,9 +101,9 @@ export default function BooksScreen({ selectedBookId, onSelect, onCloseDetail, o
       <Text style={s.sectionTitle}>Resultados · {found.length}</Text>
       {found.length ? <View style={s.results}>{found.map(book => <Pressable key={book.id} accessibilityRole="button" accessibilityLabel={`Ver ${book.title}`} onPress={() => openBook(book.id)} style={{ width: coverWidth }}><Cover book={book} width={coverWidth} /><Text style={s.resultTitle}>{book.title}</Text></Pressable>)}</View> : <View style={s.empty}><Text style={s.body}>No encontramos libros con esta búsqueda.</Text><Pressable accessibilityRole="button" onPress={() => { setQuery(""); setGenre(null); }} style={s.back}><Text style={s.backText}>Ver todos los libros</Text></Pressable></View>}
     </View> : <>
-      {row("ÚLTIMOS LANZAMIENTOS", [books[1]])}
-      {row("Porque ya leíste: El Eternauta", [books[2], books[1]], "Recomendaciones de ejemplo")}
-      {row("Descubrir", [books[2], books[0], books[1]])}
+      {row("Últimos lanzamientos", [...catalogExamples.slice(0, 4), books[1]])}
+      {row("Porque ya leíste", [books[2], ...catalogExamples.slice(4, 7), books[0]])}
+      {row("Descubrir", [...catalogExamples.slice(7), ...books])}
     </>}
   </ScrollView>;
 }

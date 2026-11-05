@@ -6,10 +6,12 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "plugins": [["expo-camera", { "cameraPermission": "Permití usar la cámara para escanear el ISBN de un libro.", "recordAudioAndroid": false }]],
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "package": "com.exor203.feriadellibro",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
